@@ -97,3 +97,62 @@ con.query("SELECT * FROM user", function (err, result, fields) {
         res.send("unauthorized access, please login first..");
     }
 });
+
+
+app.post('/update_product', authunticateRoute, (req, res) => {
+    if (req.data) {
+        let user_id = req.data.userId ? req.data.userId : undefined;
+        let user_role = req.data.role ? req.data.role : undefined;
+        if (user_id && user_role && user_role > 0) {
+            let { product_name, description, price } = req.body;
+            description = description && description.length > 0 ? description : undefined;
+            if (price != undefined && price <= 0) {
+                // return error
+                res.status = 401;
+                res.send("Price should be greater than 0.");
+            } else {
+                let con = connectDB();
+                if (con) {
+                    let get_product_by_name = `SELECT description, price FROM products WHERE name='${product_name}'`;
+                    con.query(get_product_by_name, function (err, result) {
+                        if (err) {
+                            console.log("error from from: ", err.code);
+                            res.status = 400;
+                            res.send("Something went wrong, please try again.");
+                        }
+                        if (result.length > 0) {
+                            result = result[0];
+                            description = description?description:result.description;
+                            price = price?price:result.price;
+                            let update_product = `UPDATE products SET description='${description}', price='${price}' WHERE name='${product_name}'`;
+                            con.query(update_product, function (err, rslt) {
+                                if (err) {
+                                    console.log("error from from: ", err);
+                                    res.status = 400;
+                                    res.send("Something went wrong, please try again");
+                                } else {
+                                    res.status = 200;
+                                    res.send('Product uploaded successfully');
+                                }
+                            });
+                        } else {
+                            // no product found
+                            res.status = 403;
+                            res.send("Product not found");
+                        }
+                    });
+                } else {
+                    // return error
+                    res.status = 400;
+                    res.send("Something went wrong, please try again");
+                }
+            }
+        } else {
+            res.status = 403;
+            res.send("unauthorized access, please login first");
+        }
+    } else {
+        res.status = 403;
+        res.send("unauthorized access, please login first");
+    }
+});
