@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 const bodyparser = require('body-parser');
 const { validateEmail, validatePassword, cryptPassword, comparePassword } = require('./utils');
 const { connectDB } = require('./initiateDB');
+
+// ************************************************
+// JWT token should be properly handled for all the API.
 const { authunticateRoute } = require('./middleware');
 const e = require('express');
 // app.use(express.json());
@@ -18,6 +21,8 @@ dotenv.config();
 
 const PORT = process.env.PORT;
 
+// ***************************************
+// Api for Basic login and registration setup
 app.post('/register', (req, res) => {
     const { fname, lname, email, password, type } = req.body;
     if (fname.length == 0) {
@@ -55,6 +60,9 @@ app.post('/register', (req, res) => {
         })
     }
 })
+
+// *****************************************
+// Api for Basic login and registration setup
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
     console.log(email, password, req.body);
@@ -121,7 +129,9 @@ app.post('/login', (req, res) => {
         }
     }
 })
-
+// ***********************************************************************************************************
+// Create an API to upload the product information into the database. All products should be created via upload only
+// If product info already exists in the database , should update it else insert the product
 app.post('/upload-product', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
@@ -189,63 +199,8 @@ app.post('/upload-product', authunticateRoute, (req, res) => {
     }
 });
 
-app.post('/update_product', authunticateRoute, (req, res) => {
-    if (req.data) {
-        let user_id = req.data.userId ? req.data.userId : undefined;
-        let user_role = req.data.role ? req.data.role : undefined;
-        if (user_id && user_role && user_role > 0) {
-            let { product_name, description, price } = req.body;
-            description = description && description.length > 0 ? description : undefined;
-            if (price != undefined && price <= 0) {
-                // return error
-                res.status = 401;
-                res.send("Price should be greater than 0.");
-            } else {
-                let con = connectDB();
-                if (con) {
-                    let get_product_by_name = `SELECT description, price FROM products WHERE name='${product_name}'`;
-                    con.query(get_product_by_name, function (err, result) {
-                        if (err) {
-                            console.log("error from from: ", err.code);
-                            res.status = 400;
-                            res.send("Something went wrong, please try again.");
-                        }
-                        if (result.length > 0) {
-                            result = result[0];
-                            description = description?description:result.description;
-                            price = price?price:result.price;
-                            let update_product = `UPDATE products SET description='${description}', price='${price}' WHERE name='${product_name}'`;
-                            con.query(update_product, function (err, rslt) {
-                                if (err) {
-                                    console.log("error from from: ", err);
-                                    res.status = 400;
-                                    res.send("Something went wrong, please try again");
-                                } else {
-                                    res.status = 200;
-                                    res.send('Product uploaded successfully');
-                                }
-                            });
-                        } else {
-                            // no product found
-                            res.status = 403;
-                            res.send("Product not found");
-                        }
-                    });
-                } else {
-                    // return error
-                    res.status = 400;
-                    res.send("Something went wrong, please try again");
-                }
-            }
-        } else {
-            res.status = 403;
-            res.send("unauthorized access, please login first");
-        }
-    } else {
-        res.status = 403;
-        res.send("unauthorized access, please login first");
-    }
-});
+// *********************************************************
+// Create an API to create order, update order, cancel order
 app.post('/create-order', authunticateRoute, (req, res)=>{
     if (req.data) {
         console.log(req.data);
@@ -299,6 +254,8 @@ app.post('/create-order', authunticateRoute, (req, res)=>{
     }
 })
 
+// *********************************************************
+// Create an API to create order, update order, cancel order
 app.post('/update-order', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
@@ -359,7 +316,8 @@ app.post('/update-order', authunticateRoute, (req, res) => {
     }
 });
 
-
+// *********************************************************
+// Create an API to create order, update order, cancel order
 app.post('/cancel-order', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
@@ -419,6 +377,8 @@ app.post('/cancel-order', authunticateRoute, (req, res) => {
     }
 });
 
+// ************************************************************************************************************
+// Create an api to list ordered products based on the customer. (Should include search and sort functionality)
 app.post('/user-orderd-products', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
@@ -459,6 +419,8 @@ app.post('/user-orderd-products', authunticateRoute, (req, res) => {
     }
 });
 
+// ************************************************
+// Api to list ordered product count based on date.
 app.post('/orders-on-date', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
@@ -495,6 +457,9 @@ app.post('/orders-on-date', authunticateRoute, (req, res) => {
         res.send("unauthorized access, please login first..");
     }
 });
+
+// ***************************************************************
+// Api to list customers based on the number of products purchased.
 app.post('/customer-by-purchase', authunticateRoute, (req, res) => {
     if (req.data) {
         let user_id = req.data.userId ? req.data.userId : undefined;
